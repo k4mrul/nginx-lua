@@ -22,13 +22,10 @@ jobs:
       run: |
         echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
         # echo "IMAGE_TAG=latest" >> $GITHUB_ENV
-
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      # Ignore the failure of a step and avoid terminating the job.
-      continue-on-error: true     
-      
+  
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
+      
     - name: Set up Docker Buildx
       # id: buildx
       uses: docker/setup-buildx-action@v3
@@ -41,14 +38,19 @@ jobs:
         username: ${{ secrets.DOCKER_ID }}
         password: ${{ secrets.DOCKER_PW }}
     # Multi architecture build and push
-    - name: Build and push application
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        push: true
-        file: ./Dockerfile
-        tags: k4mrul/nginx-lua:${{ env.IMAGE_TAG }}
-        platforms: linux/arm64,linux/amd64
-        build-args: |
-          ENABLED_MODULES="ndk lua cachepurge"   
+
+    - name: Build & Push Image
+      run: |
+        docker buildx build --build-arg ENABLED_MODULES="ndk lua cachepurge" --file ./Dockerfile  --push --tag k4mrul/nginx-lua:$IMAGE_TAG --platform=linux/arm64,linux/amd64 .
+    
+    # - name: Build and push application
+    #   uses: docker/build-push-action@v3
+    #   with:
+    #     context: .
+    #     push: true
+    #     file: ./Dockerfile
+    #     tags: k4mrul/nginx-lua:${{ env.IMAGE_TAG }}
+    #     platforms: linux/arm64,linux/amd64
+    #     build-args: |
+    #       ENABLED_MODULES="ndk lua cachepurge"   
           
